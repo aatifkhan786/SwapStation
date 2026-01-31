@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
+import { History } from 'lucide-react'; //NEW
 interface NavItem {
   title: string;
   url: string;
@@ -61,6 +61,7 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
     { title: 'City View', url: '/admin/city', icon: MapPin },
     { title: 'Alerts', url: '/admin/alerts', icon: AlertTriangle, badge: 8 },
     { title: 'Recommendations', url: '/admin/recommendations', icon: Lightbulb, badge: 7 },
+    { title: 'Audit Trail', url: '/admin/history', icon: History }, // ✅ NEW LINK
     { title: 'Tickets Overview', url: '/admin/tickets', icon: Ticket },
     { title: 'Notification Log', url: '/admin/notifications', icon: Bell },
     { title: 'Settings', url: '/admin/settings', icon: Settings },

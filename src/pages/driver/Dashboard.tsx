@@ -1,12 +1,12 @@
-import { useState, useEffect, createContext, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, createContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAdminStore } from '@/pages/admin/hooks/useAdminStore'; // Integrated store
 import { 
   mockStations, 
-  mockNotifications, 
   generateMockMetrics, 
   simulateMetricChange,
   Station,
-  Notification // ✅ Notification type import karein
+ 
 } from '@/lib/mock-data';
 
 // View Imports
@@ -26,10 +26,19 @@ export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // --- CONNECTED GLOBAL STATE ---
+  // We pull the live notifications and the initialize function from the global store
+  const initializeStore = useAdminStore((state) => state.initialize);
+  const allNotifications = useAdminStore((state) => state.notifications);
+  
+  // Filter notifications specifically for the Driver role from the live store
+  const driverNotifications = allNotifications.filter(n => n.target_role === 'driver');
+
+  // --- LOCAL UI STATE ---
   const [currentStation, setCurrentStation] = useState<Station>(mockStations[0]);
   const [metrics, setMetrics] = useState(generateMockMetrics(mockStations[0].id));
   const [pendingSearch, setPendingSearch] = useState('');
-  const [notifCount, setNotifCount] = useState(mockNotifications.length);
+  const [notifCount, setNotifCount] = useState(driverNotifications.length);
 
   const [settings, setSettings] = useState({
     darkMode: true,
@@ -41,6 +50,16 @@ export default function Dashboard() {
     chatBot: true,
     isPremium: false
   });
+
+  // Initialize the store on mount to ensure data is hydrated
+  useEffect(() => {
+    initializeStore();
+  }, [initializeStore]);
+
+  // Keep the notification count badge in sync with the store
+  useEffect(() => {
+    setNotifCount(driverNotifications.length);
+  }, [driverNotifications.length]);
 
   useEffect(() => {
     setMetrics(generateMockMetrics(currentStation.id));
@@ -89,29 +108,24 @@ export default function Dashboard() {
     setPendingSearch(stationName);
     navigate('/driver/stations');
   };
-
-  const allStations = mockStations; 
-  const notifs: Notification[] = mockNotifications.filter(n => n.target_role === 'driver');
-
   return (
     <SettingsContext.Provider value={{ settings, updateSetting }}>
-        <div 
-          className={cn(
-            "min-h-screen w-full transition-all duration-700 bg-cover bg-center bg-fixed",
-            // FIXED FOR NEARBYSTATION COLORS: Removed global text colors
-            settings.darkMode ? "bg-[#020609]" : "bg-slate-50"
-          )}
-          style={{ backgroundImage: bgStyles[settings.bgImage] }}
-        >
-          <div className={cn(
-            "min-h-screen w-full",
-            // FIXED FOR NEARBYSTATION COLORS: No text colors here
-            settings.bgImage !== 'none' && (
-              settings.darkMode 
-              ? "bg-black/70 backdrop-blur-[2px]" 
-              : "bg-white/90 backdrop-blur-[2px]"
-            )
-          )}>
+      <div 
+        className={cn(
+          "min-h-screen w-full transition-all duration-700 bg-cover bg-center bg-fixed",
+          settings.darkMode ? "text-white" : "text-slate-900"
+        )}
+        style={{ 
+          backgroundImage: bgStyles[settings.bgImage],
+          backgroundColor: settings.darkMode ? '#020609' : '#f8fafc' 
+        }}
+      >
+        <div className={cn(
+          "min-h-screen w-full",
+          settings.bgImage !== 'none' && (settings.darkMode ? "bg-black/70 backdrop-blur-[2px]" : "bg-white/70 backdrop-blur-[2px]")
+        )}>
+          
+
           {!settings.isPremium && (
             <div className="bg-primary/20 border-b border-primary/20 py-2 text-center flex items-center justify-center gap-4 sticky top-0 z-40 backdrop-blur-md">
                <Crown className="h-4 w-4 text-primary" />
@@ -135,7 +149,7 @@ export default function Dashboard() {
             
             {location.pathname === '/driver/stations' && (
               <NearbyView 
-                stations={allStations} 
+                stations={mockStations} 
                 currentStationId={currentStation.id}
                 onSelect={(s) => { setCurrentStation(s); navigate('/driver'); }}
                 initialSearch={pendingSearch}
@@ -145,10 +159,10 @@ export default function Dashboard() {
             
             {location.pathname === '/driver/notifications' && (
               <NotificationsView 
-                notifications={notifs} // ✅ Type error solved
+                notifications={driverNotifications} // Now receiving live data from store
                 onReroute={handleReroute}
                 onViewStation={handleViewStation}
-                onCountUpdate={setNotifCount} // ✅ setNotifCount type matches
+                onCountUpdate={setNotifCount}
               />
             )}
 
@@ -166,7 +180,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* 2. CHATBOT: Remains fixed bottom-right outside the flow */}
+        {/* CHATBOT */}
         {settings.chatBot && (
           <div className="fixed bottom-10 right-10 z-[9999]">
             <Button 

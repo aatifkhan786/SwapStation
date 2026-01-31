@@ -1,341 +1,283 @@
-import { useState, useEffect } from 'react';
-import { 
-  mockTickets, 
-  mockNotifications,
-  mockStations,
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAdminStore } from "@/pages/admin/hooks/useAdminStore"; // Connected Store
+import {
+  mockStations, 
   generateMockMetrics,
   Ticket,
   TicketStatus,
-  StationMetrics
-} from '@/lib/mock-data';
-import { PriorityBadge, StatusPill, RiskTypeIcon } from '@/components/shared';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Wrench, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle,
+  StationMetrics,
+} from "@/lib/mock-data";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  RefreshCcw,
+  Wifi,
+  User,
+  Radio,
+  ShieldCheck,
   MapPin,
-  Activity,
-  ChevronRight
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-const statusTabs: { value: TicketStatus | 'all'; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'new', label: 'New' },
-  { value: 'acknowledged', label: 'Acknowledged' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'resolved', label: 'Resolved' },
-];
+// Importing Modular Components
+import { OpsStats } from "@/components/field-ops/OpsStats";
+import { TicketQueue } from "@/components/field-ops/TicketQueue";
+import { ActionCenter } from "@/components/field-ops/ActionCenter";
+import { OpsMap } from "@/components/field-ops/OpsMap";
+import { StatusPill } from "@/components/shared"; 
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function FieldOpsDashboard() {
-  const [tickets, setTickets] = useState<Ticket[]>(mockTickets);
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentPath = location.pathname;
+
+  // --- CONNECTED GLOBAL STATE ---
+  const initializeStore = useAdminStore((state) => state.initialize);
+  const tickets = useAdminStore((state) => state.tickets);
+  const updateTicketStatus = useAdminStore((state) => state.updateTicketStatus);
+
+  // Use ID for selection to maintain reactivity with store updates
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [selectedMetrics, setSelectedMetrics] = useState<StationMetrics | null>(null);
-  const [activeTab, setActiveTab] = useState<TicketStatus | 'all'>('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Calculate stats
-  const openTickets = tickets.filter(t => t.status !== 'resolved').length;
-  const urgentTickets = tickets.filter(t => 
-    (t.priority === 'P0' || t.priority === 'P1') && t.status !== 'resolved'
-  ).length;
-  const resolvedToday = tickets.filter(t => {
-    if (!t.resolved_at) return false;
-    const today = new Date();
-    const resolved = new Date(t.resolved_at);
-    return resolved.toDateString() === today.toDateString();
-  }).length;
+  // Initialize store on mount
+  useEffect(() => {
+    initializeStore();
+  }, [initializeStore]);
 
-  const filteredTickets = activeTab === 'all' 
-    ? tickets 
-    : tickets.filter(t => t.status === activeTab);
+  // Derived selected ticket from store
+  const selectedTicket = tickets.find(t => t.id === selectedTicketId) || null;
 
-  const handleSelectTicket = (ticket: Ticket) => {
-    setSelectedTicket(ticket);
-    setSelectedMetrics(generateMockMetrics(ticket.station_id));
-  };
-
-  const handleUpdateStatus = (ticketId: string, newStatus: TicketStatus) => {
-    setTickets(prev => prev.map(t => {
-      if (t.id === ticketId) {
-        return {
-          ...t,
-          status: newStatus,
-          resolved_at: newStatus === 'resolved' ? new Date().toISOString() : t.resolved_at
-        };
-      }
-      return t;
-    }));
-    if (selectedTicket?.id === ticketId) {
-      setSelectedTicket(prev => prev ? { 
-        ...prev, 
-        status: newStatus,
-        resolved_at: newStatus === 'resolved' ? new Date().toISOString() : prev.resolved_at
-      } : null);
+  // --- LOGIC: TELEMETRY SIMULATION ---
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (selectedTicket) {
+      setSelectedMetrics(generateMockMetrics(selectedTicket.station_id));
+      interval = setInterval(() => {
+        setSelectedMetrics(generateMockMetrics(selectedTicket.station_id));
+      }, 5000);
     }
+    return () => clearInterval(interval);
+  }, [selectedTicketId]);
+
+  // --- HANDLERS ---
+  const handleUpdateStatus = (ticketId: string, newStatus: TicketStatus) => {
+    // Calling the shared store action
+    updateTicketStatus(ticketId, newStatus);
+
+    toast.success("Sync Complete", {
+      description: `Ticket status updated to ${newStatus.replace("_", " ").toUpperCase()}. HQ notified.`,
+    });
   };
 
-  const getTimeSince = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast.success("Grid Synced", {
+        description: "Latest field telemetry fetched from HQ.",
+      });
+    }, 1000);
   };
+
+  // --- ROUTING LOGIC ---
+  const isDashboard = currentPath === "/field-ops";
+  const isTicketsPage = currentPath === "/field-ops/tickets";
+  const isHealthPage = currentPath === "/field-ops/health";
+  const isHistoryPage = currentPath === "/field-ops/history";
+  const isSettingsPage = currentPath === "/field-ops/settings";
+
+  const pageTitle = isDashboard
+    ? "Field Operations"
+    : isTicketsPage
+      ? "My Ticket Queue"
+      : isHealthPage
+        ? "Station Network Health"
+        : isHistoryPage
+          ? "Resolution Logs"
+          : "Engineer Settings";
 
   return (
-    <div className="space-y-6">
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="card-gradient glow-border">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Open Tickets</p>
-                <p className="text-2xl font-bold">{openTickets}</p>
-              </div>
-              <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                <Wrench className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className={cn(
-          'card-gradient',
-          urgentTickets > 0 && 'border-status-critical/50'
-        )}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Urgent (P0/P1)</p>
-                <p className={cn(
-                  'text-2xl font-bold',
-                  urgentTickets > 0 && 'text-status-critical'
-                )}>{urgentTickets}</p>
-              </div>
-              <div className="h-10 w-10 rounded-lg bg-status-critical/20 flex items-center justify-center">
-                <AlertCircle className="h-5 w-5 text-status-critical" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="card-gradient">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Resolved Today</p>
-                <p className="text-2xl font-bold text-status-healthy">{resolvedToday}</p>
-              </div>
-              <div className="h-10 w-10 rounded-lg bg-status-healthy/20 flex items-center justify-center">
-                <CheckCircle2 className="h-5 w-5 text-status-healthy" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="h-[calc(100vh-1rem)] flex flex-col gap-6 p-6 max-w-[1600px] mx-auto overflow-hidden">
+      {/* 1. PROFESSIONAL HEADER */}
+      <div className="flex items-center justify-between flex-shrink-0">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {pageTitle}
+          </h1>
+          <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>HQ Uplink Secure</span>
+            <span className="text-border opacity-50">|</span>
+            <span>Sector 042-Alpha</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Badge
+            variant="outline"
+            className="font-mono font-normal text-xs py-1"
+          >
+            <Wifi className="h-3 w-3 mr-2" />
+            Uplink: 12ms
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleManualRefresh}
+            className="gap-2"
+          >
+            <RefreshCcw
+              className={cn("h-4 w-4", isRefreshing && "animate-spin")}
+            />
+            Sync Grid
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Tickets List */}
-        <div className="lg:col-span-2 space-y-4">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TicketStatus | 'all')}>
-            <TabsList className="w-full justify-start">
-              {statusTabs.map(tab => (
-                <TabsTrigger key={tab.value} value={tab.value} className="text-xs sm:text-sm">
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+      {/* 2. STATS ROW (Uses Live Store Tickets) */}
+      {!isSettingsPage && (
+        <div className="flex-shrink-0">
+          <OpsStats tickets={tickets} />
+        </div>
+      )}
 
-          <ScrollArea className="h-[calc(100vh-320px)]">
-            <div className="space-y-3 pr-4">
-              {filteredTickets.map((ticket) => (
+      {/* 3. DYNAMIC CONTENT AREA */}
+      <div className="flex-1 min-h-0 overflow-hidden relative rounded-xl border bg-card/30">
+        {/* VIEW: MAIN DASHBOARD (Split View) */}
+        {isDashboard && (
+          <div className="grid grid-cols-12 gap-6 h-full p-6">
+            <div className="col-span-4 h-full overflow-hidden">
+              <TicketQueue
+                tickets={tickets}
+                selectedId={selectedTicketId || undefined}
+                onSelect={(t) => setSelectedTicketId(t.id)}
+              />
+            </div>
+            <div className="col-span-8 flex flex-col gap-6 h-full overflow-y-auto pr-2">
+              <div className="h-[320px] shrink-0 rounded-xl border bg-muted/20 overflow-hidden relative">
+                <OpsMap selectedStationId={selectedTicket?.station_id} />
+              </div>
+              <div className="flex-1">
+                <ActionCenter
+                  ticket={selectedTicket}
+                  metrics={selectedMetrics}
+                  onUpdateStatus={handleUpdateStatus}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: MY TICKETS / HISTORY (Full List) */}
+        {(isTicketsPage || isHistoryPage) && (
+          <div className="h-full p-6">
+            <TicketQueue
+              tickets={
+                isHistoryPage
+                  ? tickets.filter((t) => t.status === "resolved")
+                  : tickets
+              }
+              selectedId={selectedTicketId || undefined}
+              onSelect={(t) => {
+                setSelectedTicketId(t.id);
+                navigate("/field-ops");
+              }}
+            />
+          </div>
+        )}
+
+        {/* VIEW: STATION HEALTH (Grid) */}
+        {isHealthPage && (
+          <ScrollArea className="h-full w-full rounded-md border">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+              {mockStations.map((station) => (
                 <Card
-                  key={ticket.id}
-                  className={cn(
-                    'card-gradient cursor-pointer transition-all',
-                    selectedTicket?.id === ticket.id 
-                      ? 'glow-border border-primary' 
-                      : 'hover:border-primary/50'
-                  )}
-                  onClick={() => handleSelectTicket(ticket)}
+                  key={station.id}
+                  className="hover:border-primary/50 transition-all cursor-default group"
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <RiskTypeIcon 
-                        riskType={ticket.issue_type.toLowerCase().includes('charger') ? 'charger_fault' : 'outage'} 
-                        size="lg" 
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-semibold">{ticket.station_name}</h4>
-                          <PriorityBadge priority={ticket.priority} size="sm" />
-                          <Badge 
-                            variant="outline" 
-                            className={cn(
-                              'text-xs capitalize',
-                              ticket.status === 'resolved' && 'text-status-healthy border-status-healthy',
-                              ticket.status === 'in_progress' && 'text-primary border-primary'
-                            )}
-                          >
-                            {ticket.status.replace('_', ' ')}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {ticket.issue_type}
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-base font-bold">
+                      {station.station_name}
+                    </CardTitle>
+                    <StatusPill status={station.status} />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center text-sm text-muted-foreground mb-4">
+                      <MapPin className="h-4 w-4 mr-1" /> {station.city}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm border-t pt-4">
+                      <div>
+                        <p className="text-muted-foreground text-xs uppercase tracking-wider">
+                          Uptime
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {ticket.probable_root_cause}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          <span>{getTimeSince(ticket.created_at)}</span>
-                        </div>
+                        <p className="font-mono font-medium">99.4%</p>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="text-muted-foreground text-xs uppercase tracking-wider">
+                          Load
+                        </p>
+                        <p className="font-mono font-medium">42 kW</p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           </ScrollArea>
-        </div>
+        )}
 
-        {/* Ticket Detail Panel */}
-        <div className="space-y-4">
-          {selectedTicket ? (
-            <>
-              <Card className="card-gradient glow-border">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Ticket Details</CardTitle>
-                    <PriorityBadge priority={selectedTicket.priority} />
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h3 className="text-xl font-bold">{selectedTicket.station_name}</h3>
-                    <div className="flex items-center gap-1 text-muted-foreground mt-1">
-                      <MapPin className="h-4 w-4" />
-                      <span className="text-sm">
-                        {mockStations.find(s => s.id === selectedTicket.station_id)?.city}
-                      </span>
+        {/* VIEW: SETTINGS */}
+        {isSettingsPage && (
+          <div className="h-full flex items-center justify-center p-6">
+            <Card className="w-full max-w-md">
+              <CardHeader className="text-center pb-8">
+                <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <User className="h-12 w-12 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">Field Engineer Agent</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  ID: 0X-AF42 • Senior Technician
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Radio className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Push Notifications</p>
+                      <p className="text-xs text-muted-foreground">
+                        SMS & App priority alerts
+                      </p>
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Issue Type</p>
-                    <p className="text-sm text-muted-foreground">{selectedTicket.issue_type}</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Probable Root Cause</p>
-                    <p className="text-sm text-muted-foreground">{selectedTicket.probable_root_cause}</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Created</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(selectedTicket.created_at).toLocaleString()}
-                    </p>
-                  </div>
-
-                  {selectedTicket.status !== 'resolved' && (
-                    <div className="flex gap-2 pt-2">
-                      {selectedTicket.status === 'new' && (
-                        <Button 
-                          className="flex-1"
-                          onClick={() => handleUpdateStatus(selectedTicket.id, 'acknowledged')}
-                        >
-                          Acknowledge
-                        </Button>
-                      )}
-                      {selectedTicket.status === 'acknowledged' && (
-                        <Button 
-                          className="flex-1"
-                          onClick={() => handleUpdateStatus(selectedTicket.id, 'in_progress')}
-                        >
-                          Start Work
-                        </Button>
-                      )}
-                      {selectedTicket.status === 'in_progress' && (
-                        <Button 
-                          className="flex-1 bg-status-healthy hover:bg-status-healthy/90"
-                          onClick={() => handleUpdateStatus(selectedTicket.id, 'resolved')}
-                        >
-                          <CheckCircle2 className="h-4 w-4 mr-2" />
-                          Mark Resolved
-                        </Button>
-                      )}
+                  <Badge>Active</Badge>
+                </div>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Biometric Token</p>
+                      <p className="text-xs text-muted-foreground">
+                        Secure HQ Auth
+                      </p>
                     </div>
-                  )}
-
-                  {selectedTicket.status === 'resolved' && selectedTicket.resolution_notes && (
-                    <div className="space-y-2 pt-2 border-t border-border">
-                      <p className="text-sm font-medium">Resolution Notes</p>
-                      <p className="text-sm text-muted-foreground">{selectedTicket.resolution_notes}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Station Health Snapshot */}
-              {selectedMetrics && (
-                <Card className="card-gradient">
-                  <CardHeader>
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Activity className="h-4 w-4" />
-                      Station Health
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Uptime</p>
-                        <p className={cn(
-                          'text-lg font-bold',
-                          selectedMetrics.charger_uptime < 90 && 'text-status-attention'
-                        )}>
-                          {selectedMetrics.charger_uptime.toFixed(1)}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Errors</p>
-                        <p className={cn(
-                          'text-lg font-bold',
-                          selectedMetrics.error_count > 2 && 'text-status-risk'
-                        )}>
-                          {selectedMetrics.error_count}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Queue</p>
-                        <p className="text-lg font-bold">{selectedMetrics.queue_level}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Swap Rate</p>
-                        <p className="text-lg font-bold">{selectedMetrics.swap_rate.toFixed(1)}/h</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </>
-          ) : (
-            <Card className="card-gradient">
-              <CardContent className="p-8 text-center text-muted-foreground">
-                <Wrench className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Select a ticket to view details</p>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    Re-auth
+                  </Button>
+                </div>
+                <Button className="w-full" variant="destructive">
+                  Secure Sign Out
+                </Button>
               </CardContent>
             </Card>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
