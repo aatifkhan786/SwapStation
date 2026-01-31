@@ -12,7 +12,7 @@ import DriverDashboard from "@/pages/driver/Dashboard";
 import FieldOpsDashboard from "@/pages/field-ops/Dashboard";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import NotFound from "@/pages/NotFound";
-
+import AdminRoutes from "@/pages/admin/AdminRoutes";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
@@ -134,18 +134,10 @@ function AppRoutes() {
       
       {/* Admin routes */}
       <Route
-        path="/admin"
+         path="/admin/*"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/*"
-        element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <AdminDashboard />
+            <AdminRoutes />
           </ProtectedRoute>
         }
       />
