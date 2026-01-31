@@ -73,9 +73,16 @@ export default function NotificationsView({ notifications: initialNotifs, onRero
     const isAlert = isAlertNotif(text);
     const channelIcon = n.channel === 'whatsapp' ? <MessageSquare className="h-3 w-3" /> : n.channel === 'sms' ? <Smartphone className="h-3 w-3" /> : <Layout className="h-3 w-3" />;
 
-    if (isAlert) return { type: 'alert', channelIcon, icon: <AlertCircle className="h-5 w-5 text-red-500" />, border: 'border-l-red-500', bg: 'bg-red-500/5' };
-    if (text.includes('cleared') || text.includes('normally')) return { type: 'success', channelIcon, icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, border: 'border-l-green-500', bg: 'bg-green-500/5' };
-    return { type: 'message', channelIcon, icon: <Info className="h-5 w-5 text-blue-500" />, border: 'border-l-blue-500', bg: 'bg-blue-500/5' };
+    if (settings.darkMode) {
+      if (isAlert) return { type: 'alert', channelIcon, icon: <AlertCircle className="h-5 w-5 text-red-500" />, border: 'border-l-red-500', bg: 'bg-red-500/5' };
+      if (text.includes('cleared') || text.includes('normally')) return { type: 'success', channelIcon, icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, border: 'border-l-green-500', bg: 'bg-green-500/5' };
+      return { type: 'message', channelIcon, icon: <Info className="h-5 w-5 text-blue-500" />, border: 'border-l-blue-500', bg: 'bg-blue-500/5' };
+    } else {
+      // Light mode colors
+      if (isAlert) return { type: 'alert', channelIcon, icon: <AlertCircle className="h-5 w-5 text-red-600" />, border: 'border-l-red-600', bg: 'bg-red-50' };
+      if (text.includes('cleared') || text.includes('normally')) return { type: 'success', channelIcon, icon: <CheckCircle2 className="h-5 w-5 text-green-600" />, border: 'border-l-green-600', bg: 'bg-green-50' };
+      return { type: 'message', channelIcon, icon: <Info className="h-5 w-5 text-blue-600" />, border: 'border-l-blue-600', bg: 'bg-blue-50' };
+    }
   };
 
   const filteredAndSorted = useMemo(() => {
@@ -100,11 +107,22 @@ export default function NotificationsView({ notifications: initialNotifs, onRero
     <div className="animate-in fade-in duration-500 max-w-6xl mx-auto pt-8 px-6 space-y-8 pb-20">
       <div className="flex justify-between items-start">
         <div className="flex gap-4">
-          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/5"><Bell className="h-6 w-6 text-primary" /></div>
-          <div><h1 className="text-3xl font-bold tracking-tight">{t.title}</h1><p className="text-sm text-muted-foreground mt-1">{t.subtitle}</p></div>
+          <div className={`h-12 w-12 rounded-xl ${settings.darkMode ? "bg-primary/10 border-primary/20" : "bg-blue-100 border-blue-200"} flex items-center justify-center border shadow-lg shadow-primary/5`}>
+            <Bell className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className={`text-3xl font-bold tracking-tight ${settings.darkMode ? "text-white" : "text-gray-900"}`}>
+              {t.title}
+            </h1>
+            <p className={`text-sm mt-1 ${settings.darkMode ? "text-muted-foreground" : "text-gray-600"}`}>
+              {t.subtitle}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-4 bg-secondary/10 border border-white/5 rounded-xl px-4 py-2 text-[11px] font-medium text-muted-foreground">
-            <div className="flex items-center gap-1.5 border-r border-white/10 pr-3"><Info className="h-3.5 w-3.5" /></div>
+        <div className={`flex items-center gap-4 border rounded-xl px-4 py-2 text-[11px] font-medium ${settings.darkMode ? "bg-secondary/10 border-white/5 text-muted-foreground" : "bg-gray-100 border-gray-300 text-gray-600"}`}>
+            <div className={`flex items-center gap-1.5 pr-3 ${settings.darkMode ? "border-r border-white/10" : "border-r border-gray-300"}`}>
+              <Info className="h-3.5 w-3.5" />
+            </div>
             <div className="flex items-center gap-1.5"><Smartphone className="h-3.5 w-3.5" /> SMS</div>
             <div className="flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" /> WhatsApp</div>
             <div className="flex items-center gap-1.5"><Layout className="h-3.5 w-3.5" /> Dashboard</div>
@@ -112,22 +130,50 @@ export default function NotificationsView({ notifications: initialNotifs, onRero
       </div>
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-30" />
-          <Input placeholder={t.search} className="pl-10 h-11 bg-secondary/10 border-white/5" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${settings.darkMode ? "text-white-400" : "text-white-400"}`} />
+          <Input 
+            placeholder={t.search} 
+            className={`pl-10 h-11 ${settings.darkMode ? "bg-secondary/10 border-white/5 text-white" : "bg-black border-gray-300 text-white-400"}`} 
+            value={searchTerm} 
+            onChange={(e) => setSearchTerm(e.target.value)} 
+          />
         </div>
         <Select onValueChange={setTypeFilter} defaultValue="all">
-          <SelectTrigger className="w-[180px] h-11 bg-secondary/10 border-white/5"><Filter className="h-4 w-4 mr-2 opacity-50" /><SelectValue placeholder={t.types} /></SelectTrigger>
-          <SelectContent><SelectItem value="all">{t.types}</SelectItem><SelectItem value="alert">Alerts Only</SelectItem><SelectItem value="message">Messages Only</SelectItem></SelectContent>
+          <SelectTrigger className={`w-[180px] h-11 ${settings.darkMode ? "bg-secondary/10 border-white/5" : "bg-black border-gray-300"}`}>
+            <Filter className="h-4 w-4 mr-2 opacity-100" />
+            <SelectValue placeholder={t.types} />
+          </SelectTrigger>
+          <SelectContent className={settings.darkMode ? "bg-[#0a0c10] border-white/10" : "bg-black border-gray-200"}>
+            <SelectItem value="all">{t.types}</SelectItem>
+            <SelectItem value="alert">Alerts Only</SelectItem>
+            <SelectItem value="message">Messages Only</SelectItem>
+          </SelectContent>
         </Select>
         <Select onValueChange={setChannelFilter} defaultValue="all">
-          <SelectTrigger className="w-[180px] h-11 bg-secondary/10 border-white/5"><Filter className="h-4 w-4 mr-2 opacity-50" /><SelectValue placeholder={t.channels} /></SelectTrigger>
-          <SelectContent><SelectItem value="all">{t.channels}</SelectItem><SelectItem value="dashboard_log">Dashboard</SelectItem><SelectItem value="sms">SMS</SelectItem><SelectItem value="whatsapp">WhatsApp</SelectItem></SelectContent>
+          <SelectTrigger className={`w-[180px] h-11 ${settings.darkMode ? "bg-secondary/10 border-white/5" : "bg-black border-gray-300"}`}>
+            <Filter className="h-4 w-4 mr-2 opacity-100" />
+            <SelectValue placeholder={t.channels} />
+          </SelectTrigger>
+          <SelectContent className={settings.darkMode ? "bg-[#0a0c10] border-white/10" : "bg-black border-gray-200"}>
+            <SelectItem value="all">{t.channels}</SelectItem>
+            <SelectItem value="dashboard_log">Dashboard</SelectItem>
+            <SelectItem value="sms">SMS</SelectItem>
+            <SelectItem value="whatsapp">WhatsApp</SelectItem>
+          </SelectContent>
         </Select>
         <Select onValueChange={setSortOrder} defaultValue="newest">
-          <SelectTrigger className="w-[180px] h-11 bg-secondary/10 border-white/5"><ArrowUpDown className="h-4 w-4 mr-2 opacity-50" /><SelectValue placeholder={t.sort} /></SelectTrigger>
-          <SelectContent><SelectItem value="newest">{t.sort}</SelectItem><SelectItem value="oldest">Sort: Oldest</SelectItem></SelectContent>
+          <SelectTrigger className={`w-[180px] h-11 ${settings.darkMode ? "bg-secondary/10 border-white/5" : "bg-black border-gray-300"}`}>
+            <ArrowUpDown className="h-4 w-4 mr-2 opacity-100" />
+            <SelectValue placeholder={t.sort} />
+          </SelectTrigger>
+          <SelectContent className={settings.darkMode ? "bg-[#0a0c10] border-white/10" : "bg-black border-gray-200"}>
+            <SelectItem value="newest">{t.sort}</SelectItem>
+            <SelectItem value="oldest">Sort: Oldest</SelectItem>
+          </SelectContent>
         </Select>
-        <Button variant="ghost" size="icon" className="h-11 w-11 hover:text-red-400" onClick={() => setNotifs([])}><Trash2 className="h-5 w-5 opacity-50" /></Button>
+        <Button variant="ghost" size="icon" className="h-11 w-11 text-red-900" onClick={() => setNotifs([])}>
+          <Trash2 className="h-5 w-5 opacity-100" />
+        </Button>
       </div>
       <ScrollArea className="h-[calc(100vh-320px)] pr-4">
         <div className="space-y-4 pb-10">
@@ -135,20 +181,32 @@ export default function NotificationsView({ notifications: initialNotifs, onRero
             const details = getCategoryDetails(n);
             const station = getStationFromName(n.message_text);
             return (
-              <Card key={n.id} className={cn("group relative border-l-4 border-white/5 transition-all hover:bg-secondary/10", details.border, details.bg)}>
-                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100" onClick={() => setNotifs(prev => prev.filter(item => item.id !== n.id))}><X className="h-4 w-4 opacity-50" /></Button>
+              <Card key={n.id} className={cn("group relative border-l-4 transition-all hover:opacity-90", details.border, details.bg)}>
+                <Button variant="ghost" size="icon" className={`absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 ${settings.darkMode ? "" : "hover:bg-gray-200"}`} onClick={() => setNotifs(prev => prev.filter(item => item.id !== n.id))}>
+                  <X className={`h-4 w-4 ${settings.darkMode ? "opacity-50" : "text-gray-600"}`} />
+                </Button>
                 <div className="p-5 flex gap-5">
                   <div className="mt-1">{details.icon}</div>
                   <div className="flex-1 space-y-3">
                     <div className="flex justify-between items-center pr-6">
-                      <Badge variant="outline" className="text-[10px] uppercase font-mono tracking-widest opacity-60 h-5 flex items-center gap-1.5">{details.channelIcon}{n.channel.replace('_', ' ')}</Badge>
-                      <span className="text-[11px] text-muted-foreground font-mono">{new Date(n.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <Badge variant="outline" className={`text-[10px] uppercase font-mono tracking-widest h-5 flex items-center gap-1.5 ${settings.darkMode ? "opacity-60" : "bg-gray-100 text-gray-600"}`}>
+                        {details.channelIcon}{n.channel.replace('_', ' ')}
+                      </Badge>
+                      <span className={`text-[11px] font-mono ${settings.darkMode ? "text-muted-foreground" : "text-gray-500"}`}>
+                        {new Date(n.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
-                    <p className="text-sm leading-relaxed pr-8 font-medium">{n.message_text}</p>
+                    <p className={`text-sm leading-relaxed pr-8 font-medium ${settings.darkMode ? "text-white" : "text-gray-800"}`}>
+                      {n.message_text}
+                    </p>
                     {station && details.type === 'alert' && (
                       <div className="flex gap-2 pt-1">
-                        <Button size="sm" className="h-8 text-[11px] gap-2 rounded-lg" onClick={() => onReroute(station)}><Navigation className="h-3 w-3" /> {t.reroute}</Button>
-                        <Button variant="outline" size="sm" className="h-8 text-[11px] rounded-lg" onClick={() => onViewStation(station)}>{t.view}</Button>
+                        <Button size="sm" className="h-8 text-[11px] gap-2 rounded-lg" onClick={() => onReroute(station)}>
+                          <Navigation className="h-3 w-3" /> {t.reroute}
+                        </Button>
+                        <Button variant="outline" size="sm" className="h-8 text-[11px] rounded-lg" onClick={() => onViewStation(station)}>
+                          {t.view}
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -157,7 +215,10 @@ export default function NotificationsView({ notifications: initialNotifs, onRero
             );
           })}
           {filteredAndSorted.length === 0 && (
-             <div className="py-24 text-center border-2 border-dashed border-white/5 rounded-3xl opacity-20"><Bell className="h-12 w-12 mx-auto mb-4" /><p>{t.noResults}</p></div>
+             <div className={`py-24 text-center border-2 border-dashed rounded-3xl ${settings.darkMode ? "border-white/5 opacity-20 text-white" : "border-gray-300 opacity-50 text-gray-700"}`}>
+               <Bell className="h-12 w-12 mx-auto mb-4" />
+               <p>{t.noResults}</p>
+             </div>
           )}
         </div>
       </ScrollArea>

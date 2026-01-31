@@ -120,52 +120,55 @@ export default function SettingsView() {
       upgradeReq: "UPGRADE NEEDED"
   };
 
+  // Light mode और dark mode के लिए dynamic classes
+  const isDarkMode = settings.darkMode;
+  
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-5xl mx-auto pt-10 pb-24 px-6 space-y-8">
+    <div className={`animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-5xl mx-auto pt-10 pb-24 px-6 space-y-8 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
       {/* HEADER - Border and Save button removed */}
       <div className="flex justify-between items-end mb-4">
         <div>
           <h1 className="text-4xl font-black tracking-tighter">{t.title}</h1>
-          <p className="text-muted-foreground mt-1 font-medium">{t.subtitle}</p>
+          <p className={`mt-1 font-medium ${isDarkMode ? 'text-muted-foreground' : 'text-gray-500'}`}>{t.subtitle}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* --- SECTION: APPEARANCE --- */}
-        <Card className="bg-secondary/5 border-white/5 shadow-2xl backdrop-blur-sm">
+        <Card className={`${isDarkMode ? 'bg-secondary/5 border-white/5' : 'bg-white border-gray-500 shadow-md'}`}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-lg font-bold">
-              <div className="p-2 rounded-lg bg-orange-500/10 text-orange-400">
+            <CardTitle className={`flex items-center gap-3 text-lg font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`} >
+              <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-orange-500/10 text-orange-400' : 'bg-orange-100 text-orange-600'}`}>
                 <Sun className="h-5 w-5" />
               </div>
               {t.appearance}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-8">
+          <CardContent className={`space-y-8 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <Label className="text-base font-bold">{t.darkMode}</Label>
-                <p className="text-xs text-muted-foreground">{t.darkModeDesc}</p>
+                <p className={`text-xs ${isDarkMode ? 'text-muted-foreground' : 'text-gray-500'}`}>{t.darkModeDesc}</p>
               </div>
-              <div className="flex items-center gap-3 bg-background/50 p-1.5 rounded-xl border border-white/5">
-                <Sun className={cn("h-4 w-4 transition-colors", !settings.darkMode ? "text-primary" : "opacity-20")} />
+              <div className={`flex items-center gap-3 ${isDarkMode ? 'bg-background/50 border-white/5' : 'bg-gray-100 border-gray-200'} p-1.5 rounded-xl border`}>
+                <Sun className={cn("h-4 w-4 transition-colors", !settings.darkMode ? "text-orange-600" : "opacity-20")} />
                 <Switch 
                     checked={settings.darkMode} 
                     onCheckedChange={(val) => updateSetting('darkMode', val)} 
                 />
-                <Moon className={cn("h-4 w-4 transition-colors", settings.darkMode ? "text-primary" : "opacity-20")} />
+                <Moon className={cn("h-4 w-4 transition-colors", settings.darkMode ? "text-blue-400" : "opacity-20")} />
               </div>
             </div>
 
             <div className="space-y-4">
-              <Label className="flex items-center gap-2 font-bold">
+              <Label className={`flex items-center gap-2 font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 <ImageIcon className="h-4 w-4 opacity-50" /> {t.bgImage}
               </Label>
               <Select value={settings.bgImage} onValueChange={(val) => updateSetting('bgImage', val)}>
-                <SelectTrigger className="h-12 bg-background/50 border-white/10 font-medium">
+                <SelectTrigger className={`h-12 font-medium ${isDarkMode ? 'bg-background/50 border-white/10 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0a0c10] border-white/10">
+                <SelectContent className={`${isDarkMode ? 'bg-[#0a0c10] border-white/10' : 'bg-black border-gray-200'}`}>
                   <SelectItem value="none">{t.bgNone}</SelectItem>
                   <SelectItem value="city">{t.bgCity}</SelectItem>
                   <SelectItem value="abstract">{t.bgAbstract}</SelectItem>
@@ -177,10 +180,10 @@ export default function SettingsView() {
         </Card>
 
         {/* --- SECTION: AUDIO --- */}
-        <Card className="bg-secondary/5 border-white/5 shadow-2xl backdrop-blur-sm">
+        <Card className={`${isDarkMode ? 'bg-secondary/5 border-white/5' : 'bg-white border-gray-500 shadow-md'}`}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-lg font-bold">
-              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
+            <CardTitle className={`flex items-center gap-3 text-lg font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
                 <Volume2 className="h-5 w-5" />
               </div>
               {t.audio}
@@ -189,10 +192,10 @@ export default function SettingsView() {
           <CardContent className="space-y-8">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label className="text-base font-bold flex items-center gap-2">
+                <Label className={`text-base font-bold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     <Music className="h-4 w-4 opacity-50" /> {t.bgMusic}
                 </Label>
-                <p className="text-xs text-muted-foreground">{t.bgMusicDesc}</p>
+                <p className={`text-xs ${isDarkMode ? 'text-muted-foreground' : 'text-gray-500'}`}>{t.bgMusicDesc}</p>
               </div>
               <Switch 
                 checked={settings.bgMusic} 
@@ -202,7 +205,7 @@ export default function SettingsView() {
 
             {settings.bgMusic && (
                 <div className="space-y-5 animate-in slide-in-from-top-4 duration-500">
-                    <div className="flex justify-between text-[11px] font-black uppercase tracking-widest opacity-50">
+                    <div className={`flex justify-between text-[11px] font-black uppercase tracking-widest ${isDarkMode ? 'opacity-50' : 'text-gray-500'}`}>
                         <span>{t.volume}</span>
                         <span>{settings.musicVolume}%</span>
                     </div>
@@ -215,12 +218,12 @@ export default function SettingsView() {
                 </div>
             )}
 
-            <div className="flex items-center justify-between pt-4 border-t border-white/5">
+            <div className={`flex items-center justify-between pt-4 ${isDarkMode ? 'border-t border-white/5' : 'border-t border-gray-200'}`}>
               <div className="space-y-1">
-                <Label className="text-base font-bold flex items-center gap-2">
+                <Label className={`text-base font-bold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     <BellRing className="h-4 w-4 opacity-50" /> {t.notifSound}
                 </Label>
-                <p className="text-xs text-muted-foreground">{t.notifSoundDesc}</p>
+                <p className={`text-xs ${isDarkMode ? 'text-muted-foreground' : 'text-gray-500'}`}>{t.notifSoundDesc}</p>
               </div>
               <Switch 
                 checked={settings.notifSound} 
@@ -231,10 +234,10 @@ export default function SettingsView() {
         </Card>
 
         {/* --- SECTION: LOCALIZATION --- */}
-        <Card className="bg-secondary/5 border-white/5 shadow-2xl backdrop-blur-sm">
+        <Card className={`${isDarkMode ? 'bg-secondary/5 border-white/5' : 'bg-white border-gray-500 shadow-md'}`}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-lg font-bold">
-              <div className="p-2 rounded-lg bg-green-500/10 text-green-400">
+            <CardTitle className={`flex items-center gap-3 text-lg font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-green-500/10 text-green-400' : 'bg-green-100 text-green-600'}`}>
                 <Languages className="h-5 w-5" />
               </div>
               {t.local}
@@ -242,24 +245,24 @@ export default function SettingsView() {
           </CardHeader>
           <CardContent className="space-y-8">
             <div className="space-y-4">
-              <Label className="font-bold">{t.lang}</Label>
+              <Label className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{t.lang}</Label>
               <Select value={settings.language} onValueChange={(val) => updateSetting('language', val)}>
-                <SelectTrigger className="h-12 bg-background/50 border-white/10 font-medium">
+                <SelectTrigger className={`h-12 font-medium ${isDarkMode ? 'bg-background/50 border-white/10 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0a0c10] border-white/10">
+                <SelectContent className={`${isDarkMode ? 'bg-[#0a0c10] border-white/10' : 'bg-black border-gray-200'}`}>
                   <SelectItem value="en">English (US)</SelectItem>
                   <SelectItem value="id">Bahasa Indonesia</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-white/5">
+            <div className={`flex items-center justify-between pt-4 ${isDarkMode ? 'border-t border-white/5' : 'border-t border-gray-200'}`}>
               <div className="space-y-1">
-                <Label className="text-base font-bold flex items-center gap-2">
+                <Label className={`text-base font-bold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     <MessageSquare className="h-4 w-4 opacity-50" /> {t.chatbot}
                 </Label>
-                <p className="text-xs text-muted-foreground">{t.chatbotDesc}</p>
+                <p className={`text-xs ${isDarkMode ? 'text-muted-foreground' : 'text-gray-500'}`}>{t.chatbotDesc}</p>
               </div>
               <Switch 
                 checked={settings.chatBot} 
@@ -270,21 +273,21 @@ export default function SettingsView() {
         </Card>
 
         {/* --- SECTION: PRO --- */}
-        <Card className="border-primary/30 bg-primary/5 shadow-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-500">
-            <Crown className="h-16 w-16 text-primary" />
+        <Card className={`${isDarkMode ? 'border-primary/30 bg-primary/5' : 'border-blue-200 bg-gradient-to-b from-blue-50 to-white'} shadow-lg relative overflow-hidden group`}>
+          <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-500 ${isDarkMode ? 'text-primary' : 'text-primary'}`}>
+            <Crown className="h-16 w-16" />
           </div>
           <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-lg font-bold text-primary">
+            <CardTitle className={`flex items-center gap-3 text-lg font-bold ${isDarkMode ? 'text-primary' : 'text-primary'}`}>
                {t.pro}
             </CardTitle>
-            <CardDescription className="text-primary/70 font-medium">{t.proDesc}</CardDescription>
+            <CardDescription className={`font-medium ${isDarkMode ? 'text-primary/70' : 'text-primary'}`}>{t.proDesc}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label className="text-base font-bold">{t.ads}</Label>
-                <p className="text-xs text-muted-foreground">{t.adsDesc}</p>
+                <Label className={`text-base font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{t.ads}</Label>
+                <p className={`text-xs ${isDarkMode ? 'text-muted-foreground' : 'text-gray-600'}`}>{t.adsDesc}</p>
               </div>
               <div className="flex flex-col items-end gap-2">
                  <Switch 
@@ -292,7 +295,7 @@ export default function SettingsView() {
                     onCheckedChange={(val) => updateSetting('isPremium', val)} 
                  />
                  {!settings.isPremium && (
-                    <Badge variant="outline" className="text-[9px] font-black border-primary text-primary tracking-tighter py-0">
+                    <Badge variant="outline" className={`text-[9px] font-black tracking-tighter py-0 ${isDarkMode ? 'border-primary text-primary' : 'border-primary text-primary'}`}>
                         {t.upgradeReq}
                     </Badge>
                  )}
@@ -303,7 +306,7 @@ export default function SettingsView() {
                 variant={settings.isPremium ? "outline" : "default"} 
                 className={cn(
                     "w-full h-12 font-black uppercase tracking-widest transition-all",
-                    !settings.isPremium && "shadow-xl shadow-primary/20 hover:scale-[1.02]"
+                    !settings.isPremium && `shadow-lg ${isDarkMode ? 'shadow-primary/20' : 'shadow-primary/20'} hover:scale-[1.02]`
                 )}
             >
                {settings.isPremium ? t.manage : t.upgrade}

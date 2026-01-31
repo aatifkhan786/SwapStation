@@ -1,11 +1,12 @@
-import { useState, useEffect, createContext } from 'react';
+import { useState, useEffect, createContext, Dispatch, SetStateAction } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   mockStations, 
   mockNotifications, 
   generateMockMetrics, 
   simulateMetricChange,
-  Station 
+  Station,
+  Notification // ✅ Notification type import karein
 } from '@/lib/mock-data';
 
 // View Imports
@@ -90,26 +91,27 @@ export default function Dashboard() {
   };
 
   const allStations = mockStations; 
-  const notifs = mockNotifications.filter(n => n.target_role === 'driver');
+  const notifs: Notification[] = mockNotifications.filter(n => n.target_role === 'driver');
 
   return (
     <SettingsContext.Provider value={{ settings, updateSetting }}>
-      {/* 1. FIXED: Changed h-screen to min-h-screen and removed overflow-auto */}
-      <div 
-        className={cn(
-          "min-h-screen w-full transition-all duration-700 bg-cover bg-center bg-fixed",
-          settings.darkMode ? "text-white" : "text-slate-900"
-        )}
-        style={{ 
-          backgroundImage: bgStyles[settings.bgImage],
-          backgroundColor: settings.darkMode ? '#020609' : '#f8fafc' 
-        }}
-      >
-        <div className={cn(
-          "min-h-screen w-full",
-          settings.bgImage !== 'none' && (settings.darkMode ? "bg-black/70 backdrop-blur-[2px]" : "bg-white/70 backdrop-blur-[2px]")
-        )}>
-          
+        <div 
+          className={cn(
+            "min-h-screen w-full transition-all duration-700 bg-cover bg-center bg-fixed",
+            // FIXED FOR NEARBYSTATION COLORS: Removed global text colors
+            settings.darkMode ? "bg-[#020609]" : "bg-slate-50"
+          )}
+          style={{ backgroundImage: bgStyles[settings.bgImage] }}
+        >
+          <div className={cn(
+            "min-h-screen w-full",
+            // FIXED FOR NEARBYSTATION COLORS: No text colors here
+            settings.bgImage !== 'none' && (
+              settings.darkMode 
+              ? "bg-black/70 backdrop-blur-[2px]" 
+              : "bg-white/90 backdrop-blur-[2px]"
+            )
+          )}>
           {!settings.isPremium && (
             <div className="bg-primary/20 border-b border-primary/20 py-2 text-center flex items-center justify-center gap-4 sticky top-0 z-40 backdrop-blur-md">
                <Crown className="h-4 w-4 text-primary" />
@@ -143,10 +145,10 @@ export default function Dashboard() {
             
             {location.pathname === '/driver/notifications' && (
               <NotificationsView 
-                notifications={notifs} 
+                notifications={notifs} // ✅ Type error solved
                 onReroute={handleReroute}
                 onViewStation={handleViewStation}
-                onCountUpdate={setNotifCount}
+                onCountUpdate={setNotifCount} // ✅ setNotifCount type matches
               />
             )}
 
