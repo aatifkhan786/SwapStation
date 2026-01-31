@@ -15,6 +15,7 @@ import {
   Ticket,
   Notification,
   DecisionStatus,
+  TicketStatus, // Added import
 } from '@/lib/mock-data';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -58,7 +59,8 @@ interface AdminState {
   initialize: () => void;
   updateMetrics: () => void;
   handleRecommendationDecision: (recId: string, decision: DecisionStatus, rejectionDetails?: { reason: string; note: string }) => void;
-  escalateAlert: (alert: Alert) => void; // Pass the full alert object
+  updateTicketStatus: (ticketId: string, status: TicketStatus) => void; // NEW ACTION
+  escalateAlert: (alert: Alert) => void; 
   acknowledgeAlert: (alertId: string) => void;
   updateConfig: (newConfig: Partial<AdminConfig>) => void;
   
@@ -185,8 +187,8 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         const newNotifications = [...get().notifications];
         const newTickets = [...get().tickets];
 
+        // LOGIC FOR FIELD OPS: Ticket / Escalate
         if (rec.action_type === 'ticket' || rec.action_type === 'escalate') {
-            // ✅ FIX: Find the original alert that triggered this recommendation
             const sourceAlert = get().alerts.find(a => a.id === rec.alert_id);
             
             const newTicket: Ticket = {
@@ -194,7 +196,6 @@ export const useAdminStore = create<AdminState>((set, get) => ({
                 station_id: rec.station_id,
                 station_name: rec.station_name,
                 issue_type: `Auto: ${rec.why_text}`,
-                // ✅ FIX: Use the priority FROM THE ORIGINAL ALERT, not a random one
                 priority: sourceAlert?.priority || (rec.action_type === 'escalate' ? 'P1' : 'P2'),
                 probable_root_cause: sourceAlert?.description || rec.why_text,
                 status: 'new',
@@ -211,25 +212,53 @@ export const useAdminStore = create<AdminState>((set, get) => ({
                 sent_at: new Date().toISOString(),
             });
 
-            // ✅ FIX: Also update the source alert to 'acknowledged' so it doesn't look "new"
             if (sourceAlert) {
               set(state => ({
                 alerts: state.alerts.map(a => a.id === sourceAlert.id ? { ...a, status: 'acknowledged' } : a)
               }));
             }
         }
+
+        // LOGIC FOR DRIVER: Reroute
+        if (rec.action_type === 'reroute') {
+          newNotifications.unshift({
+              id: `ntf-${uuidv4().slice(0, 8)}`,
+              target_role: 'driver',
+              channel: 'dashboard_log',
+              message_text: `🚨 REROUTE ALERT: ${rec.station_name} is experiencing high congestion. Please divert to recommended alternatives.`,
+              is_read: false,
+              sent_at: new Date().toISOString(),
+          });
+        }
+
         set({ notifications: newNotifications, tickets: newTickets });
     }
   },
 
+  updateTicketStatus: (ticketId, status) => {
+    const state = get();
+    set(state => ({
+      tickets: state.tickets.map(t => 
+        t.id === ticketId ? { ...t, status, resolved_at: status === 'resolved' ? new Date().toISOString() : t.resolved_at } : t
+      ),
+      // Notify Admin when a ticket is resolved
+      notifications: status === 'resolved' ? [{
+        id: `ntf-${uuidv4().slice(0, 8)}`,
+        target_role: 'admin',
+        channel: 'dashboard_log',
+        message_text: `✅ Field Ops resolved ticket for ${state.tickets.find(t => t.id === ticketId)?.station_name}`,
+        is_read: false,
+        sent_at: new Date().toISOString()
+      }, ...state.notifications] : state.notifications
+    }));
+  },
+
   escalateAlert: (alert) => {
-    // ✅ FIX: Use the alert object directly
     const newTicket: Ticket = {
       id: `tkt-${uuidv4().slice(0, 4)}`,
       station_id: alert.station_id,
       station_name: alert.station_name,
       issue_type: `Manual Escalation: ${alert.risk_type}`, 
-      // ✅ FIX: Use the alert's actual priority
       priority: alert.priority, 
       probable_root_cause: alert.description,
       status: 'new',
@@ -238,7 +267,6 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
     set(state => ({
       tickets: [newTicket, ...state.tickets],
-      // ✅ FIX: Mark the alert as acknowledged
       alerts: state.alerts.map(a => a.id === alert.id ? { ...a, status: 'acknowledged' } : a),
       notifications: [{
           id: `ntf-${uuidv4().slice(0, 8)}`,
@@ -275,7 +303,6 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   }),
 
   generateAIRecommendations: async () => {
-    // This logic for on-demand AI generation is also correct and complete.
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
         console.error("No Gemini API Key found");
@@ -293,7 +320,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
             error_count: Math.floor(Math.random() * 5)
         };
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const prompt = `
             You are an Autonomous Operations AI for an EV Battery Swapping Network.
             Analyze the following station telemetry and generate a structured recommendation.

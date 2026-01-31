@@ -7,12 +7,13 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 
 // Pages
+import Intro from "@/pages/Intro"; // Make sure Intro.tsx is in src/pages/
 import Login from "@/pages/auth/Login";
 import DriverDashboard from "@/pages/driver/Dashboard";
 import FieldOpsDashboard from "@/pages/field-ops/Dashboard";
-import AdminDashboard from "@/pages/admin/Dashboard";
 import NotFound from "@/pages/NotFound";
 import AdminRoutes from "@/pages/admin/AdminRoutes";
+
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
@@ -58,8 +59,6 @@ function RoleBasedRedirect() {
     return <Navigate to="/login" replace />;
   }
 
-  // FIXED: Removed the 'driver' fallback that forced everyone to the driver page
-  // Only redirect if the role is actually loaded
   if (!userRole) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -90,11 +89,12 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Public routes */}
+      {/* ROOT ROUTE: Intro Page is now the first thing seen */}
+      <Route path="/" element={<Intro />} />
+
+      {/* LOGIN ROUTE: If user is logged in, redirect to dashboard. If not, show Login. */}
+      {/* Intro page links point here */}
       <Route path="/login" element={user ? <RoleBasedRedirect /> : <Login />} />
-      
-      {/* Role-based redirect from root */}
-      <Route path="/" element={<RoleBasedRedirect />} />
       
       {/* Driver routes */}
       <Route
