@@ -10,39 +10,16 @@ import {
   ChevronRight,
   Check,
   X,
-  Navigation,
-  Flag,
+  Activity, // Used for Work In Progress icon
 } from "lucide-react";
 import { PriorityBadge, RiskTypeIcon } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import Confetti from 'react-confetti';
-
-// --- HOOK: Window Size for Full Screen Confetti ---
-const useWindowSize = () => {
-  const [windowSize, setWindowSize] = useState({
-    width: typeof window !== "undefined" ? window.innerWidth : 0,
-    height: typeof window !== "undefined" ? window.innerHeight : 0,
-  });
-
-  useEffect(() => {
-    function handleResize() {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    }
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return windowSize;
-};
+import { useLocation } from "react-router-dom"; // Import useLocation
 
 export function TicketQueue({
   tickets,
-  selectedId,
+  selectedId, // Prop received from parent (Dashboard or Queue Page)
   onSelect,
   onApprove,
   onDecline,
@@ -53,57 +30,31 @@ export function TicketQueue({
   onApprove?: (t: Ticket) => void;
   onDecline?: (t: Ticket, reason?: string) => void;
 }) {
-  // 1. Get full screen dimensions
-  const { width, height } = useWindowSize(); 
+  const location = useLocation(); 
+
+  // Internal state to manage selected ticket and filter, now synchronized with props/location
   const [filter, setFilter] = useState<TicketStatus | "all">("all");
+  const [internalSelectedId, setInternalSelectedId] = useState<string | null>(selectedId || null);
 
   /* Decline Logic */
   const [declineFor, setDeclineFor] = useState<string | null>(null);
   const [declineReason, setDeclineReason] = useState("");
 
-  /* Active Task Logic */
-  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
-
-  /* Celebration State */
-  const [showConfetti, setShowConfetti] = useState(false);
-
-  /* Auto Redirect to Active Tab */
+  // Synchronize internalSelectedId with selectedId prop from parent
   useEffect(() => {
-    if (activeTaskId) {
-      setFilter("in_progress");
+    setInternalSelectedId(selectedId || null);
+  }, [selectedId]);
+
+  // Handle redirect state from Dashboard
+  useEffect(() => {
+    if (location.state?.redirectToTicketId && location.state?.defaultTab) {
+      setInternalSelectedId(location.state.redirectToTicketId);
+      setFilter(location.state.defaultTab as TicketStatus);
+      
+      // Clear the state from location to prevent re-triggering on refresh
+      window.history.replaceState({}, document.title);
     }
-  }, [activeTaskId]);
-
-  /* Handle Complete Task (Logic + Celebration) */
-  const handleCompleteTask = (e: React.MouseEvent, ticket: Ticket) => {
-    e.stopPropagation();
-    
-    // 1. Logic Update
-    onDecline?.(ticket); // Assuming parent handles 'resolve' logic via this prop
-    setFilter("resolved");
-    setActiveTaskId(null);
-
-    // 2. Trigger Celebration
-    setShowConfetti(true);
-
-    // 3. Colorful Toast Notification
-    toast.success("✨ Task Completed Successfully! ✨", {
-      description: "Great job! The grid is back online.",
-      duration: 5000,
-      style: {
-        background: "linear-gradient(to right, #10B981, #0EA5E9)", // Green to Blue Gradient
-        color: "#ffffff",
-        border: "none",
-        fontSize: "14px",
-        fontWeight: "500"
-      },
-    });
-
-    // 4. Stop Confetti after 5 seconds
-    setTimeout(() => {
-      setShowConfetti(false);
-    }, 5000);
-  };
+  }, [location.state]); // Only run when location.state changes
 
   /* Filtering Data */
   const filtered =
@@ -119,19 +70,7 @@ export function TicketQueue({
 
   return (
     <>
-      {/* ================= CONFETTI LAYER (FULL SCREEN) ================= */}
-      {/* Placed outside the Card to ensure it covers everything including Navbar */}
-      {showConfetti && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 9999, pointerEvents: 'none' }}>
-          <Confetti
-            width={width}
-            height={height}
-            recycle={true} // Keeps raining for the duration
-            numberOfPieces={600} // High density for better effect
-            gravity={0.15}
-          />
-        </div>
-      )}
+      {/* Removed Confetti Layer from here - now handled by FieldOpsDashboard */}
 
       <Card className="h-full flex flex-col border-none shadow-none bg-transparent relative z-0">
         {/* ================= TABS ================= */}
@@ -160,20 +99,22 @@ export function TicketQueue({
         <ScrollArea className="flex-1 -mr-4 pr-4">
           <div className="space-y-3 pb-4">
             {filtered.map((ticket) => {
-              const isSelected = selectedId === ticket.id;
+              const isSelected = internalSelectedId === ticket.id; 
               const isNew = ticket.status === "new";
-              const isActive = ticket.status === "in_progress";
+              const isActiveTicket = ticket.status === "in_progress"; 
 
               return (
                 <div
                   key={ticket.id}
-                  onClick={() => onSelect(ticket)}
+                  onClick={() => {
+                    setInternalSelectedId(ticket.id); // Update internal state on click
+                    onSelect(ticket); // Also notify parent to update its selectedId
+                  }}
                   className={cn(
                     "group p-4 rounded-xl transition-all cursor-pointer",
                     "border border-white/30 backdrop-blur-xl",
                     "bg-gradient-to-br from-emerald-400/20 via-sky-400/15 to-blue-500/20",
-                    (isSelected || isActive) &&
-                      "ring-2 ring-emerald-500 shadow-emerald-500/30"
+                    isSelected && "ring-2 ring-emerald-500 shadow-emerald-500/30"
                   )}
                 >
                   <div className="flex gap-4">
@@ -209,7 +150,7 @@ export function TicketQueue({
                         </span>
                       </div>
 
-                      {isActive && (
+                      {isActiveTicket && (
                         <div className="mt-2 text-xs font-semibold text-emerald-700 flex items-center gap-1">
                           <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -227,9 +168,7 @@ export function TicketQueue({
                             className="bg-emerald-600 hover:bg-emerald-700 text-white"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onApprove?.(ticket);
-                              setActiveTaskId(ticket.id);
-                              toast.success("Ticket moved to Active");
+                              onApprove?.(ticket); // Parent will handle status change and toast
                             }}
                           >
                             <Check className="h-3 w-3 mr-1" />
@@ -276,36 +215,8 @@ export function TicketQueue({
                           </Button>
                         </div>
                       )}
-
-                      {/* ACTIVE TASK VIEW (MAP & COMPLETE) */}
-                      {isActive && activeTaskId === ticket.id && (
-                        <div className="mt-4 space-y-3 animate-in zoom-in-95 duration-300">
-                          <iframe
-                            title="map"
-                            className="w-full h-[260px] rounded-lg border border-slate-200 shadow-sm"
-                            loading="lazy"
-                            src={`https://www.google.com/maps?q=${encodeURIComponent(
-                              ticket.station_name
-                            )}&output=embed`}
-                          />
-
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline" className="flex-1 bg-white hover:bg-slate-50">
-                              <Navigation className="h-4 w-4 mr-1" />
-                              Navigate
-                            </Button>
-
-                            <Button
-                              size="sm"
-                              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-md"
-                              onClick={(e) => handleCompleteTask(e, ticket)}
-                            >
-                              <Flag className="h-4 w-4 mr-1" />
-                              Complete Task
-                            </Button>
-                          </div>
-                        </div>
-                      )}
+                      
+                      {/* Removed the entire ACTIVE TASK VIEW (MAP & COMPLETE) block from here */}
                     </div>
 
                     <ChevronRight className="h-4 w-4 text-slate-500 self-center" />

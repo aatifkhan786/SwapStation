@@ -105,7 +105,20 @@ const surabayaStations: Omit<Station, 'distance'>[] = [
   { id: 'sta-16', station_name: 'Gubeng Transit', lat: -7.2654, lng: 112.7517, city: 'Surabaya', status: 'critical' },
 ];
 
-export const mockStations: Station[] = [...jakartaStations, ...surabayaStations].map(s => ({
+// 🌟 NEW: Delhi stations
+const delhiStations: Omit<Station, 'distance'>[] = [
+  { id: 'sta-17', station_name: 'Connaught Place', lat: 28.6324, lng: 77.2194, city: 'Delhi', status: 'healthy' },
+  { id: 'sta-18', station_name: 'Saket Metro', lat: 28.5284, lng: 77.2104, city: 'Delhi', status: 'attention' },
+  { id: 'sta-19', station_name: 'Dwarka Sector 21', lat: 28.5623, lng: 77.0166, city: 'Delhi', status: 'healthy' },
+  { id: 'sta-20', station_name: 'Indira Gandhi Airport', lat: 28.5605, lng: 77.1009, city: 'Delhi', status: 'critical' },
+  { id: 'sta-21', station_name: 'Lajpat Nagar Market', lat: 28.5663, lng: 77.2425, city: 'Delhi', status: 'risk' },
+  { id: 'sta-22', station_name: 'Cyber City Gurugram', lat: 28.4913, lng: 77.0877, city: 'Delhi', status: 'healthy' }, // Technically Gurgaon but part of NCR
+  { id: 'sta-23', station_name: 'Noida Sector 18', lat: 28.5724, lng: 77.3245, city: 'Delhi', status: 'attention' }, // Technically Noida but part of NCR
+  { id: 'sta-24', station_name: 'Akshardham Temple', lat: 28.6127, lng: 77.2773, city: 'Delhi', status: 'healthy' },
+];
+
+
+export const mockStations: Station[] = [...jakartaStations, ...surabayaStations, ...delhiStations].map(s => ({
   ...s,
   distance: Math.round((Math.random() * 8 + 0.5) * 10) / 10
 }));
@@ -161,7 +174,11 @@ export const mockTickets: Ticket[] = [
   { id: 'tkt-6', station_id: 'sta-2', station_name: 'Thamrin Plaza', issue_type: 'Charger Fault', priority: 'P2', probable_root_cause: 'Cooling fan malfunction', assigned_to: 'ops-1', assigned_to_name: 'Ahmad Wijaya', status: 'resolved', resolution_notes: 'Replaced cooling fan assembly', created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(), resolved_at: new Date(Date.now() - 1000 * 60 * 60).toISOString() },
   { id: 'tkt-7', station_id: 'sta-6', station_name: 'PIK Boulevard', issue_type: 'Outage', priority: 'P1', probable_root_cause: 'UPS battery failure', assigned_to: 'ops-2', assigned_to_name: 'Budi Santoso', status: 'resolved', resolution_notes: 'Replaced UPS batteries', created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(), resolved_at: new Date(Date.now() - 1000 * 60 * 90).toISOString() },
   { id: 'tkt-8', station_id: 'sta-9', station_name: 'Tunjungan Plaza', issue_type: 'Error Spike', priority: 'P3', probable_root_cause: 'Network connectivity issues', assigned_to: 'ops-2', assigned_to_name: 'Budi Santoso', status: 'in_progress', created_at: new Date(Date.now() - 1000 * 60 * 40).toISOString() },
+  { id: 'tkt-9', station_id: 'sta-17', station_name: 'Connaught Place', issue_type: 'Congestion', priority: 'P1', probable_root_cause: 'High peak hour traffic', assigned_to: 'ops-3', assigned_to_name: 'Rakesh Sharma', status: 'new', created_at: new Date(Date.now() - 1000 * 60 * 10).toISOString() },
+  { id: 'tkt-10', station_id: 'sta-20', station_name: 'Indira Gandhi Airport', issue_type: 'Charger Fault', priority: 'P0', probable_root_cause: 'Foreign object in charger port', assigned_to: 'ops-3', assigned_to_name: 'Rakesh Sharma', status: 'acknowledged', created_at: new Date(Date.now() - 1000 * 60 * 20).toISOString() },
+  { id: 'tkt-11', station_id: 'sta-21', station_name: 'Lajpat Nagar Market', issue_type: 'Power Outage', priority: 'P2', probable_root_cause: 'Local power grid issue', assigned_to: 'ops-3', assigned_to_name: 'Rakesh Sharma', status: 'new', created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString() },
 ];
+
 
 export const mockNotifications: Notification[] = [
   { id: 'ntf-1', recommendation_id: 'rec-1', target_role: 'driver', channel: 'dashboard_log', message_text: '🚨 Senayan Park is currently offline. Please head to Pondok Indah (2.1 km) or Kemang Square (1.8 km)', is_read: false, sent_at: new Date(Date.now() - 1000 * 60 * 3).toISOString() },
@@ -184,6 +201,9 @@ export const mockNotifications: Notification[] = [
   { id: 'ntf-18', target_role: 'admin', channel: 'dashboard_log', message_text: '📈 System health: All Surabaya stations operating at optimal capacity', is_read: true, sent_at: new Date(Date.now() - 1000 * 60 * 150).toISOString() },
   { id: 'ntf-19', target_role: 'driver', channel: 'dashboard_log', message_text: '🌙 Evening update: All Jakarta stations have good availability', is_read: true, sent_at: new Date(Date.now() - 1000 * 60 * 420).toISOString() },
   { id: 'ntf-20', target_role: 'admin', channel: 'dashboard_log', message_text: '🔔 Recommendation snoozed: Rebalance for Kelapa Gading (will resurface in 1 hour)', is_read: true, sent_at: new Date(Date.now() - 1000 * 60 * 32).toISOString() },
+  // Delhi specific notifications
+  { id: 'ntf-21', recommendation_id: 'rec-11', target_role: 'field_ops', channel: 'dashboard_log', message_text: '🔧 New P1 ticket assigned: Congestion at Connaught Place', is_read: false, sent_at: new Date(Date.now() - 1000 * 60 * 9).toISOString() },
+  { id: 'ntf-22', recommendation_id: 'rec-12', target_role: 'driver', channel: 'dashboard_log', message_text: '⚠️ Heavy traffic near Lajpat Nagar Market. Use alternative routes.', is_read: false, sent_at: new Date(Date.now() - 1000 * 60 * 3).toISOString() },
 ];
 
 // Demo users for hackathon
@@ -215,6 +235,7 @@ export function calculateKPIs(stations: Station[], alerts: Alert[], metrics: Sta
     p0Alerts,
     jakartaCount: stations.filter(s => s.city === 'Jakarta').length,
     surabayaCount: stations.filter(s => s.city === 'Surabaya').length,
+    delhiCount: stations.filter(s => s.city === 'Delhi').length, // Added Delhi count
   };
 }
 

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Typewriter Hook for AI Effect
+// Typewriter Hook for AI Effect (No longer directly used for UI, but kept in case of backend AI logic)
 const useTypewriter = (text: string, speed = 30) => {
   const [displayText, setDisplayText] = useState('');
   
@@ -45,26 +45,13 @@ export function ActionCenter({
   metrics: StationMetrics | null, 
   onUpdateStatus: (id: string, status: TicketStatus) => void 
 }) {
-  const [analysisStep, setAnalysisStep] = useState(0);
-
-  // Simulation of AI Thinking Process
-  useEffect(() => {
-    if (ticket) {
-      setAnalysisStep(0);
-      const t1 = setTimeout(() => setAnalysisStep(1), 1000); // Step 1: Connect to DB
-      const t2 = setTimeout(() => setAnalysisStep(2), 2500); // Step 2: Analyze Logs
-      const t3 = setTimeout(() => setAnalysisStep(3), 4000); // Step 3: Generate Solution
-      return () => { 
-        clearTimeout(t1); 
-        clearTimeout(t2); 
-        clearTimeout(t3); 
-      };
-    }
-  }, [ticket]);
+  // Removed analysisStep state and related useEffect for AI Simulation
+  // const [analysisStep, setAnalysisStep] = useState(0); 
 
   // AI Generated Text (Mocked) - Final fix to use AI's RCA
   const aiReasoningFull = `RCA: ${ticket?.probable_root_cause || "No cause provided."} Recommended action: Inspect main power coupling and reset firmware to clear residual error codes. Impact: 98% Uptime Restoration.`;
   
+  // Kept useTypewriter hook, but its output is not rendered
   const aiReasoning = useTypewriter(
     ticket ? aiReasoningFull : "", 
     20 // Typing speed
@@ -88,7 +75,7 @@ export function ActionCenter({
   return (
     <div className="space-y-6 h-full flex flex-col">
       
-      {/* 1. TICKET HEADER (Compact) */}
+      {/* 1. TICKET HEADER (Compact) - NO CHANGE */}
       <Card className="border-white/10 bg-card/50 backdrop-blur-md flex-shrink-0">
         <CardHeader className="pb-3 pt-4">
           <div className="flex justify-between items-start">
@@ -104,10 +91,10 @@ export function ActionCenter({
         </CardHeader>
       </Card>
 
-      {/* 2. AI COPILOT TERMINAL (The WOW Factor) */}
+      {/* 2. AI COPILOT TERMINAL (REMOVED FROM UI) */}
+      {/* 
       <Card className="flex-1 bg-black/80 border-primary/20 shadow-[0_0_30px_rgba(var(--primary-rgb),0.1)] overflow-hidden relative group">
         
-        {/* Terminal Header */}
         <div className="bg-primary/10 border-b border-primary/20 p-2 px-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-primary">
             <Sparkles className="w-4 h-4 animate-pulse" />
@@ -123,7 +110,6 @@ export function ActionCenter({
         <CardContent className="p-4 font-mono text-sm relative z-10 h-[280px]">
           <ScrollArea className="h-full pr-4">
             <div className="space-y-3">
-              {/* Step 1: Connecting */}
               {analysisStep >= 0 && (
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <Database className="w-3 h-3" />
@@ -132,7 +118,6 @@ export function ActionCenter({
                 </div>
               )}
               
-              {/* Step 2: Processing */}
               {analysisStep >= 1 && (
                 <div className="flex items-center gap-3 text-blue-400">
                   <Cpu className="w-3 h-3" />
@@ -141,7 +126,6 @@ export function ActionCenter({
                 </div>
               )}
 
-              {/* Step 3: Result */}
               {analysisStep >= 2 && (
                 <div className="flex items-center gap-3 text-emerald-400">
                   <CheckCircle2 className="w-3 h-3" />
@@ -149,7 +133,6 @@ export function ActionCenter({
                 </div>
               )}
 
-              {/* Step 4: The AI Output */}
               {analysisStep >= 3 && (
                 <div className="mt-4 p-3 bg-primary/10 border-l-2 border-primary rounded-r-lg">
                   <div className="flex items-center gap-2 mb-2">
@@ -164,11 +147,12 @@ export function ActionCenter({
             </div>
           </ScrollArea>
         </CardContent>
-        {/* Background Grid for Tech Feel */}
         <div className="absolute inset-0 bg-grid-white/[0.02] opacity-10 pointer-events-none" />
       </Card>
+      */}
 
-      {/* 3. LIVE SENSORS (Sense) */}
+      {/* 3. LIVE SENSORS (REMOVED FROM UI) */}
+      {/*
       {metrics && (
         <Card className="flex-shrink-0">
           <CardHeader className='py-2'>
@@ -199,8 +183,9 @@ export function ActionCenter({
           </CardContent>
         </Card>
       )}
+      */}
 
-      {/* 4. ACTIONS (Act) */}
+      {/* 4. ACTIONS (Act) - NO CHANGE */}
       <div className="grid grid-cols-1 gap-3 flex-shrink-0 pb-4">
         {ticket.status === 'new' && (
           <Button size="lg" className="w-full font-bold shadow-lg shadow-primary/20" onClick={() => onUpdateStatus(ticket.id, 'acknowledged')}>
