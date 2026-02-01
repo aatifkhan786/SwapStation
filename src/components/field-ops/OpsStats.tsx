@@ -5,7 +5,7 @@ import { Ticket } from "@/lib/mock-data";
 export function OpsStats({ tickets }: { tickets: Ticket[] }) {
   const active = tickets.filter((t) => t.status !== "resolved").length;
   const critical = tickets.filter(
-    (t) => t.priority === "P0" && t.status !== "resolved"
+    (t) => t.priority === "P0" && t.status !== "resolved",
   ).length;
   const resolved = tickets.filter((t) => t.status === "resolved").length;
 
@@ -19,10 +19,10 @@ export function OpsStats({ tickets }: { tickets: Ticket[] }) {
     <Card
       className="
         rounded-2xl
-        border border-white/30
-        bg-gradient-to-br from-emerald-400/20 via-sky-400/15 to-blue-500/20
+        border border-teal-400/30
+        bg-teal-400/20
         backdrop-blur-xl
-        shadow-lg shadow-emerald-400/20
+        shadow-lg shadow-teal-500/20
       "
     >
       <CardContent className="p-5 flex items-center justify-between">
