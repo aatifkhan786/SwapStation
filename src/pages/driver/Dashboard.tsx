@@ -19,6 +19,7 @@ import SettingsView from './SettingsView';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DriverAssistant } from './components/DriverAssistant'; 
 
 export const SettingsContext = createContext<any>(null);
 
@@ -180,16 +181,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* CHATBOT */}
-        {settings.chatBot && (
-          <div className="fixed bottom-10 right-10 z-[9999]">
-            <Button 
-              className="h-16 w-16 rounded-full shadow-[0_10px_40px_rgba(59,130,246,0.6)] bg-primary hover:bg-primary/90 hover:scale-110 transition-all border-4 border-white/20 flex items-center justify-center p-0"
-            >
-              <MessageSquare className="h-8 w-8 text-white" />
-            </Button>
-          </div>
-        )}
+        {settings.chatBot && <DriverAssistant />}
       </div>
     </SettingsContext.Provider>
   );
