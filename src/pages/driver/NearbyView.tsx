@@ -160,8 +160,8 @@ export default function NearbyView({
           </div>
           <Popover>
             <PopoverTrigger asChild>
-                <Button variant="outline" className={cn(`h-11 px-5 gap-2 ${settings.darkMode ? "border-white/10" : "border-gray-300"}`, (selectedStatuses.length > 0 || maxDistance < 999) && "border-primary text-primary")}>
-                  <Filter className="h-4 w-4" /> {t.filters}
+                <Button variant="outline" className={cn(`h-11 px-5 gap-2 ${settings.darkMode ? "border-white/10 text-white" : "border-gray-300 text-white"}`, (selectedStatuses.length > 0 || maxDistance < 999) && "border-primary text-primary")}>
+                  <Filter className={`h-4 w-4 ${settings.darkMode ? "text-white" : "text-white"}`} /> {t.filters}
                 </Button>
             </PopoverTrigger>
             <PopoverContent className={`w-64 p-4 space-y-4 shadow-2xl ${settings.darkMode ? "bg-[#0a0c10] border-white/10" : "bg-white border-gray-200"}`} align="end">

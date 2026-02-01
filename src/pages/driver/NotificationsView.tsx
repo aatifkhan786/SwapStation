@@ -130,47 +130,46 @@ export default function NotificationsView({ notifications: initialNotifs, onRero
       </div>
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
-          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${settings.darkMode ? "text-white-400" : "text-white-400"}`} />
-          <Input 
-            placeholder={t.search} 
-            className={`pl-10 h-11 ${settings.darkMode ? "bg-secondary/10 border-white/5 text-white" : "bg-black border-gray-300 text-white-400"}`} 
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)} 
-          />
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${settings.darkMode ? "text-gray-400" : "text-gray-500"}`}/>
+          <Input placeholder={t.search} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`pl-10 h-11 ${settings.darkMode ? "bg-[#0f1117] border border-white/10 text-white placeholder:text-gray-400" : "bg-white border border-gray-300 text-black placeholder:text-gray-500"}`}/>
         </div>
+        
         <Select onValueChange={setTypeFilter} defaultValue="all">
-          <SelectTrigger className={`w-[180px] h-11 ${settings.darkMode ? "bg-secondary/10 border-white/5" : "bg-black border-gray-300"}`}>
-            <Filter className="h-4 w-4 mr-2 opacity-100" />
+          <SelectTrigger className={`w-[180px] h-11 flex items-center gap-2 ${settings.darkMode ? "bg-[#0f1117] text-white border border-white/10 hover:bg-[#151823]" : "bg-white text-black border border-gray-300 hover:bg-gray-50"}`}>
+            <Filter className={`h-4 w-4 ${settings.darkMode ? "text-gray-300" : "text-gray-600"}`}/>
             <SelectValue placeholder={t.types} />
           </SelectTrigger>
-          <SelectContent className={settings.darkMode ? "bg-[#0a0c10] border-white/10" : "bg-black border-gray-200"}>
-            <SelectItem value="all">{t.types}</SelectItem>
+          <SelectContent className={`${settings.darkMode ? "bg-[#0a0c10] text-white border border-white/10" : "bg-white text-black border border-gray-200"}`}>
+            <SelectItem value="all">All Types</SelectItem>
             <SelectItem value="alert">Alerts Only</SelectItem>
             <SelectItem value="message">Messages Only</SelectItem>
           </SelectContent>
         </Select>
+
         <Select onValueChange={setChannelFilter} defaultValue="all">
-          <SelectTrigger className={`w-[180px] h-11 ${settings.darkMode ? "bg-secondary/10 border-white/5" : "bg-black border-gray-300"}`}>
-            <Filter className="h-4 w-4 mr-2 opacity-100" />
+          <SelectTrigger className={`w-[180px] h-11 flex items-center gap-2 ${settings.darkMode ? "bg-[#0f1117] text-white border border-white/10 hover:bg-[#151823]" : "bg-white text-black border border-gray-300 hover:bg-gray-50"}`}>
+            <Filter className={`h-4 w-4 ${settings.darkMode ? "text-gray-300" : "text-gray-600"}`}/>
             <SelectValue placeholder={t.channels} />
           </SelectTrigger>
-          <SelectContent className={settings.darkMode ? "bg-[#0a0c10] border-white/10" : "bg-black border-gray-200"}>
+          <SelectContent className={`${settings.darkMode ? "bg-[#0a0c10] text-white border border-white/10" : "bg-white text-black border border-gray-200"}`}>
             <SelectItem value="all">{t.channels}</SelectItem>
             <SelectItem value="dashboard_log">Dashboard</SelectItem>
             <SelectItem value="sms">SMS</SelectItem>
             <SelectItem value="whatsapp">WhatsApp</SelectItem>
           </SelectContent>
         </Select>
+        
         <Select onValueChange={setSortOrder} defaultValue="newest">
-          <SelectTrigger className={`w-[180px] h-11 ${settings.darkMode ? "bg-secondary/10 border-white/5" : "bg-black border-gray-300"}`}>
-            <ArrowUpDown className="h-4 w-4 mr-2 opacity-100" />
+          <SelectTrigger className={`w-[180px] h-11 flex items-center gap-2 ${settings.darkMode ? "bg-[#0f1117] text-white border border-white/10 hover:bg-[#151823]" : "bg-white text-black border border-gray-300 hover:bg-gray-50"}`}>
+            <ArrowUpDown className={`h-4 w-4 ${settings.darkMode ? "text-gray-300" : "text-gray-600"}`}/>
             <SelectValue placeholder={t.sort} />
           </SelectTrigger>
-          <SelectContent className={settings.darkMode ? "bg-[#0a0c10] border-white/10" : "bg-black border-gray-200"}>
+          <SelectContent className={`${settings.darkMode ? "bg-[#0a0c10] text-white border border-white/10" : "bg-white text-black border border-gray-200"}`}>
             <SelectItem value="newest">{t.sort}</SelectItem>
             <SelectItem value="oldest">Sort: Oldest</SelectItem>
           </SelectContent>
         </Select>
+
         <Button variant="ghost" size="icon" className="h-11 w-11 text-red-900" onClick={() => setNotifs([])}>
           <Trash2 className="h-5 w-5 opacity-100" />
         </Button>
